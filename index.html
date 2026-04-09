@@ -41,17 +41,19 @@
         h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
         .subtitle { font-size: 0.95rem; color: var(--text-gray); font-weight: 600; margin-bottom: 30px; }
 
-        .input-group { position: relative; text-align: left; margin-bottom: 30px; }
-        .input-label { font-size: 0.9rem; font-weight: 800; color: var(--main); margin-left: 5px; margin-bottom: 8px; display: block; text-transform: uppercase; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 30px; }
+        .currency-group { width: 70px; }
+        .income-group { flex: 1; position: relative; }
+
+        .input-label { font-size: 0.8rem; font-weight: 800; color: var(--main); margin-left: 5px; margin-bottom: 8px; display: block; text-transform: uppercase; text-align: left; }
         
         input {
             width: 100%;
-            padding: 20px 15px;
-            padding-right: 45px;
+            padding: 18px 12px;
             border: 2px solid var(--border);
             border-radius: var(--radius);
             background: var(--input-bg);
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 800;
             color: var(--main) !important;
             box-sizing: border-box;
@@ -64,44 +66,62 @@
 
         .clear-btn {
             position: absolute;
-            right: 15px;
-            bottom: 16px;
+            right: 12px;
+            bottom: 15px;
             background: #eee;
             border: none;
             color: #888;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 800;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 2;
         }
         .clear-btn.active { display: flex; }
 
-        .results {
-            display: grid;
-            gap: 15px;
-            margin-top: 20px;
-        }
+        .results { display: grid; gap: 12px; margin-top: 10px; }
         .result-item {
             background: #fff;
             border: 2px solid var(--accent);
-            padding: 20px;
+            padding: 18px;
             border-radius: var(--radius);
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            cursor: pointer;
+            position: relative;
             transition: transform 0.1s;
+            text-align: left;
         }
-        .res-label { font-size: 0.85rem; font-weight: 800; color: var(--text-gray); text-transform: uppercase; margin-bottom: 4px; }
-        .res-val { font-size: 1.5rem; font-weight: 800; color: var(--main); }
-        .res-desc { font-size: 0.8rem; color: var(--text-gray); margin-top: 4px; font-weight: 500; }
+        .result-item:active { transform: scale(0.98); background: var(--input-bg); }
+        .res-label { font-size: 0.75rem; font-weight: 800; color: var(--text-gray); text-transform: uppercase; margin-bottom: 2px; }
+        .res-val { font-size: 1.6rem; font-weight: 800; color: var(--main); }
+        .res-desc { font-size: 0.75rem; color: var(--text-gray); margin-top: 4px; font-weight: 500; line-height: 1.4; }
 
-        footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
+        .advice-box {
+            margin-top: 25px;
+            padding: 15px;
+            background: #fdfdfd;
+            border-radius: var(--radius);
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            font-weight: 600;
+            border: 1px dashed var(--border);
+            display: none;
+        }
+
+        #toast {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--main); color: #fff;
+            padding: 10px 20px; border-radius: 30px; font-size: 0.8rem; font-weight: 700;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+        }
+
+        footer { margin-top: 50px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
         footer a { color: inherit; text-decoration: underline; }
         .footer-btns { margin-top: 30px; }
         .kofi-btn {
@@ -128,32 +148,44 @@
 </head>
 <body>
 
+<div id="toast">Copied to clipboard</div>
+
 <div class="container">
     <h1>Budget Planner</h1>
     <p class="subtitle">The 50/30/20 Rule for Financial Freedom.</p>
 
-    <div class="input-group">
-        <span class="input-label">Monthly Net Income</span>
-        <input type="text" id="incomeInput" placeholder="5000" inputmode="decimal" oninput="calculateBudget()">
-        <button class="clear-btn" id="clr-btn" onclick="clearInput()">×</button>
+    <div class="input-row">
+        <div class="currency-group">
+            <span class="input-label">Unit</span>
+            <input type="text" id="unitInput" placeholder="$" maxlength="3" oninput="calculate()">
+        </div>
+        <div class="income-group">
+            <span class="input-label">Monthly Net Income</span>
+            <input type="text" id="incomeInput" placeholder="5000" inputmode="decimal" oninput="calculate()">
+            <button class="clear-btn" id="clr-btn" onclick="clearInput()">×</button>
+        </div>
     </div>
 
-    <div class="results">
-        <div class="result-item">
+    <div class="results" id="resultsArea">
+        <div class="result-item" onclick="copyValue('needsVal')">
             <span class="res-label">Needs (50%)</span>
             <span class="res-val" id="needsVal">0</span>
-            <span class="res-desc">Rent, Food, Utilities, Health</span>
+            <span class="res-desc">Rent, Food, Utilities, Health, Transport</span>
         </div>
-        <div class="result-item">
+        <div class="result-item" onclick="copyValue('wantsVal')">
             <span class="res-label">Wants (30%)</span>
             <span class="res-val" id="wantsVal">0</span>
-            <span class="res-desc">Dining out, Hobbies, Subscriptions</span>
+            <span class="res-desc">Dining out, Hobbies, Shopping, Subscriptions</span>
         </div>
-        <div class="result-item">
+        <div class="result-item" onclick="copyValue('savingsVal')">
             <span class="res-label">Savings & Debt (20%)</span>
             <span class="res-val" id="savingsVal">0</span>
-            <span class="res-desc">Investment, Emergency fund, Loans</span>
+            <span class="res-desc">Emergency Fund, Investments, Loan Repayments</span>
         </div>
+    </div>
+
+    <div id="adviceBox" class="advice-box">
+        💡 Focus on covering "Needs" first. If they exceed 50%, try cutting "Wants" to balance your budget.
     </div>
 
     <div class="footer-btns">
@@ -179,23 +211,29 @@
 
 <script>
     const incomeInput = document.getElementById('incomeInput');
+    const unitInput = document.getElementById('unitInput');
     const clrBtn = document.getElementById('clr-btn');
     const needsVal = document.getElementById('needsVal');
     const wantsVal = document.getElementById('wantsVal');
     const savingsVal = document.getElementById('savingsVal');
+    const adviceBox = document.getElementById('adviceBox');
+    const toast = document.getElementById('toast');
 
-    function calculateBudget() {
+    function calculate() {
         let val = incomeInput.value.replace(/[^0-9.]/g, '');
         if (incomeInput.value !== val) incomeInput.value = val;
         
         const income = parseFloat(val);
+        const unit = unitInput.value || '';
         
         if (!isNaN(income) && income > 0) {
-            needsVal.innerText = formatNumber(income * 0.5);
-            wantsVal.innerText = formatNumber(income * 0.3);
-            savingsVal.innerText = formatNumber(income * 0.2);
+            needsVal.innerText = unit + formatNumber(income * 0.5);
+            wantsVal.innerText = unit + formatNumber(income * 0.3);
+            savingsVal.innerText = unit + formatNumber(income * 0.2);
+            adviceBox.style.display = 'block';
         } else {
             resetValues();
+            adviceBox.style.display = 'none';
         }
         
         clrBtn.classList.toggle('active', incomeInput.value !== '');
@@ -215,7 +253,18 @@
         incomeInput.value = '';
         resetValues();
         clrBtn.classList.remove('active');
+        adviceBox.style.display = 'none';
         incomeInput.focus();
+    }
+
+    async function copyValue(id) {
+        const text = document.getElementById(id).innerText;
+        if (text === '0') return;
+        try {
+            await navigator.clipboard.writeText(text);
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 1500);
+        } catch (err) {}
     }
 
     function showModal() { document.getElementById('modal').style.display = 'flex'; }
