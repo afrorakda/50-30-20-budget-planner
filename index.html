@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>50/30/20 Budget Planner</title>
+    
+    <link rel="icon" href="image_102.png">
+    <link rel="apple-touch-icon" href="image_102.png">
+
+    <style>
+        :root {
+            --main: #333;
+            --bg: #fff;
+            --accent: #eee;
+            --border: #ccc;
+            --input-bg: #fafafa;
+            --radius: 15px;
+            --text-gray: #666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+        .subtitle { font-size: 0.95rem; color: var(--text-gray); font-weight: 600; margin-bottom: 30px; }
+
+        .input-group { position: relative; text-align: left; margin-bottom: 30px; }
+        .input-label { font-size: 0.9rem; font-weight: 800; color: var(--main); margin-left: 5px; margin-bottom: 8px; display: block; text-transform: uppercase; }
+        
+        input {
+            width: 100%;
+            padding: 20px 15px;
+            padding-right: 45px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--main) !important;
+            box-sizing: border-box;
+            outline: none;
+            -webkit-appearance: none;
+            -webkit-text-fill-color: var(--main) !important;
+            opacity: 1 !important;
+        }
+        input::placeholder { color: #bbb; -webkit-text-fill-color: #bbb; }
+
+        .clear-btn {
+            position: absolute;
+            right: 15px;
+            bottom: 16px;
+            background: #eee;
+            border: none;
+            color: #888;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .clear-btn.active { display: flex; }
+
+        .results {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .result-item {
+            background: #fff;
+            border: 2px solid var(--accent);
+            padding: 20px;
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transition: transform 0.1s;
+        }
+        .res-label { font-size: 0.85rem; font-weight: 800; color: var(--text-gray); text-transform: uppercase; margin-bottom: 4px; }
+        .res-val { font-size: 1.5rem; font-weight: 800; color: var(--main); }
+        .res-desc { font-size: 0.8rem; color: var(--text-gray); margin-top: 4px; font-weight: 500; }
+
+        footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
+        footer a { color: inherit; text-decoration: underline; }
+        .footer-btns { margin-top: 30px; }
+        .kofi-btn {
+            display: inline-block; background: var(--main); color: #fff;
+            padding: 14px 28px; border-radius: var(--radius);
+            text-decoration: none; font-weight: bold; font-size: 15px; margin-bottom: 15px;
+        }
+        .home-btn {
+            display: block; width: 75%; margin: 0 auto; background: var(--accent);
+            color: var(--main); border: none; padding: 12px;
+            border-radius: var(--radius); font-weight: 800; font-size: 14px; cursor: pointer;
+        }
+
+        #modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal-content {
+            background: #fff; width: 85%; max-width: 340px; padding: 35px;
+            border-radius: var(--radius); text-align: left; position: relative;
+        }
+        .close-x { position: absolute; top: 15px; right: 20px; font-size: 24px; color: #888; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Budget Planner</h1>
+    <p class="subtitle">The 50/30/20 Rule for Financial Freedom.</p>
+
+    <div class="input-group">
+        <span class="input-label">Monthly Net Income</span>
+        <input type="text" id="incomeInput" placeholder="5000" inputmode="decimal" oninput="calculateBudget()">
+        <button class="clear-btn" id="clr-btn" onclick="clearInput()">×</button>
+    </div>
+
+    <div class="results">
+        <div class="result-item">
+            <span class="res-label">Needs (50%)</span>
+            <span class="res-val" id="needsVal">0</span>
+            <span class="res-desc">Rent, Food, Utilities, Health</span>
+        </div>
+        <div class="result-item">
+            <span class="res-label">Wants (30%)</span>
+            <span class="res-val" id="wantsVal">0</span>
+            <span class="res-desc">Dining out, Hobbies, Subscriptions</span>
+        </div>
+        <div class="result-item">
+            <span class="res-label">Savings & Debt (20%)</span>
+            <span class="res-val" id="savingsVal">0</span>
+            <span class="res-desc">Investment, Emergency fund, Loans</span>
+        </div>
+    </div>
+
+    <div class="footer-btns">
+        <a href="https://ko-fi.com/afrorakda" target="_blank" class="kofi-btn">☕️buy me a coffee</a>
+        <button class="home-btn" onclick="showModal()">Add to Home Screen</button>
+    </div>
+
+    <footer>
+        <div>No login / No tracking / No ads / Browser only</div>
+        <div><a href="https://afrorakda.com/privacy/">Privacy Policy</a> / afrorakda © 2026</div>
+    </footer>
+</div>
+
+<div id="modal" onclick="hideModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-x" onclick="hideModal()">×</span>
+        <h3>📱 Install</h3>
+        <p>Add to your home screen.</p>
+        <p>🍏 <strong>iPhone (Safari):</strong><br>Tap Share, then Add to Home Screen.</p>
+        <p>🤖 <strong>Android (Chrome):</strong><br>Tap Menu (⋮), then Add to Home Screen.</p>
+    </div>
+</div>
+
+<script>
+    const incomeInput = document.getElementById('incomeInput');
+    const clrBtn = document.getElementById('clr-btn');
+    const needsVal = document.getElementById('needsVal');
+    const wantsVal = document.getElementById('wantsVal');
+    const savingsVal = document.getElementById('savingsVal');
+
+    function calculateBudget() {
+        let val = incomeInput.value.replace(/[^0-9.]/g, '');
+        if (incomeInput.value !== val) incomeInput.value = val;
+        
+        const income = parseFloat(val);
+        
+        if (!isNaN(income) && income > 0) {
+            needsVal.innerText = formatNumber(income * 0.5);
+            wantsVal.innerText = formatNumber(income * 0.3);
+            savingsVal.innerText = formatNumber(income * 0.2);
+        } else {
+            resetValues();
+        }
+        
+        clrBtn.classList.toggle('active', incomeInput.value !== '');
+    }
+
+    function formatNumber(num) {
+        return num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function resetValues() {
+        needsVal.innerText = '0';
+        wantsVal.innerText = '0';
+        savingsVal.innerText = '0';
+    }
+
+    function clearInput() {
+        incomeInput.value = '';
+        resetValues();
+        clrBtn.classList.remove('active');
+        incomeInput.focus();
+    }
+
+    function showModal() { document.getElementById('modal').style.display = 'flex'; }
+    function hideModal() { document.getElementById('modal').style.display = 'none'; }
+</script>
+
+</body>
+</html>
